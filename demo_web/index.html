@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Exqutor Demonstration</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<link href="https://unpkg.com/bootstrap@5/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/pev2/dist/pev2.css">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/pev2/dist/pev2.umd.js"></script>
+<style>
+  :root {
+    --results-main-min-height: 160px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+  html, body { height: 100%; }
+  body {
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 14px;
+  }
+
+  header {
+    background: #b8d8f0;
+    text-align: center;
+    padding: 12px;
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #333;
+  }
+
+  /* ── top control bar ─────────────────────────────────────── */
+  .controls {
+    display: flex;
+    align-items: stretch;
+    gap: 20px;
+    padding: 20px 24px;
+    background: #fff;
+    border-bottom: 2px solid #333;
+  }
+  .selectors {
+    display: grid;
+    grid-template-columns: 148px 180px;
+    gap: 12px 28px;
+    align-items: center;
+    align-content: start;
+    flex: 0 0 auto;
+  }
+  .selectors label { font-size: 22px; font-weight: 600; color: #333; white-space: nowrap; }
+  .selectors select {
+    width: 170px; padding: 10px 12px;
+    border: 2px solid #2e6da4; border-radius: 4px;
+    font-size: 20px; background: #fff; cursor: pointer;
+  }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle-opt {
+    display: flex; align-items: center; gap: 4px;
+    padding: 9px 20px; border: 2px solid #2e6da4; border-radius: 4px;
+    font-size: 20px; font-weight: 600; color: #2e6da4;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .toggle-opt input { display: none; }
+  .toggle-opt:has(input:checked) { background: #2e6da4; color: #fff; }
+  .stepper {
+    width: 170px;
+    height: 50px;
+    display: flex;
+    align-items: stretch;
+    border: 2px solid #2e6da4;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .stepper button {
+    flex: 0 0 36px;
+    border: none;
+    background: #eef5fc;
+    color: #1a5fa8;
+    font-size: 26px;
+    font-weight: 800;
+    cursor: pointer;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stepper button:first-child { border-right: 1px solid #b8d0e8; }
+  .stepper button:last-child { border-left: 1px solid #b8d0e8; }
+  .stepper button:hover { background: #f0f6ff; }
+  .stepper input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 0;
+    border: none;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #2e6da4;
+    outline: none;
+    background: #fff;
+  }
+  .sql-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .sql-wrap textarea {
+    flex: 1;
+    min-width: 0;
+    height: 240px;
+    padding: 10px 12px;
+    border: 2px solid #333; border-radius: 4px;
+    font-family: 'Courier New', monospace; font-size: 18px; font-weight: 400;
+    resize: vertical; background: #fafafa;
+  }
+  button#startBtn {
+    padding: 14px 30px;
+    background: #fff; border: 2px solid #333;
+    border-radius: 20px; font-size: 19px; font-weight: 700;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.15s;
+    align-self: flex-start;
+  }
+  button#startBtn:hover { background: #f0f0f0; }
+  button#startBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── results grid ────────────────────────────────────────── */
+  .results {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    align-content: start;
+    align-items: stretch;
+    flex: 0 0 auto;
+    min-height: 0;
+    margin-bottom: 8px;
+  }
+  .panel {
+    border-right: 2px solid #333;
+    padding: 20px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .panel:last-child { border-right: none; }
+  .panel h2 {
+    font-size: 30px; font-weight: 700;
+    margin-bottom: 16px; color: #222;
+  }
+
+  /* result table box */
+  .plan-box {
+    border: 2px solid #333; border-radius: 4px;
+    height: var(--results-main-min-height);
+    min-height: var(--results-main-min-height);
+    max-height: var(--results-main-min-height);
+    margin-bottom: 0;
+    flex: 0 0 auto;
+    overflow: auto; background: #fafafa;
+  }
+  .panel-footer {
+    margin-top: auto;
+    flex-shrink: 0;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .plan-box.is-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-size: 17px;
+  }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .result-table th {
+    position: sticky; top: 0; background: #e8f0f8;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 2px solid #b8d0e8; white-space: nowrap;
+    font-weight: 600; color: #1a5fa8;
+  }
+  .result-table td {
+    padding: 7px 12px; border-bottom: 1px solid #eee;
+    white-space: normal; word-break: break-word;
+    max-width: 200px;
+  }
+  .result-table tr:hover td { background: #f0f6ff; }
+
+  .timing-box {
+    border: 2px solid #333; border-radius: 4px;
+    padding: 10px 14px; margin-bottom: 14px;
+    height: 58px; background: #fafafa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 700; color: #1a5fa8;
+    line-height: 1.2;
+  }
+  .timing-box.is-placeholder { color: #aaa; font-size: 17px; font-weight: 400; }
+
+  .rowcount-box {
+    font-size: 16px; font-weight: 600; color: #555;
+    margin-bottom: 4px;
+    min-height: 20px;
+    line-height: 1.25;
+    background: transparent;
+    border: 0;
+  }
+  .rowcount-box.is-placeholder { color: #aaa; font-weight: 400; }
+
+  .view-btn {
+    width: 100%;
+    height: 52px;
+    padding: 0 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2e6da4; border: 2px solid #2e6da4; color: #fff;
+    border-radius: 24px; font-size: 21px; font-weight: 700;
+    line-height: 1;
+    cursor: pointer; letter-spacing: 0.3px;
+    transition: background 0.15s;
+  }
+  .view-btn:hover:not(:disabled) { background: #1a5fa8; border-color: #1a5fa8; }
+  .view-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* spinner */
+  .spinner {
+    display: none; margin: 30px auto;
+    width: 36px; height: 36px;
+    border: 4px solid #dde3ea; border-top-color: #2e6da4;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .running .spinner { display: block; }
+  .running .plan-box, .running .timing-box, .running .rowcount-box { display: none; }
+
+  /* chart panel */
+  .chart-panel { display: flex; flex-direction: column; padding: 20px; gap: 0; }
+  .chart-panel h2 { font-size: 26px; font-weight: 700; color: #222; margin-bottom: 14px; }
+  .chart-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: var(--results-main-min-height);
+  }
+  .chart-canvas { position: relative; width: 100%; flex: 1; min-height: 0; }
+  .speedup-box {
+    margin-bottom: 14px;
+    border: 3px solid #9fc3e8;
+    border-radius: 8px;
+    background: #f4f9ff;
+    padding: 10px 14px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #1a5fa8;
+  }
+  .speedup-box.is-placeholder {
+    color: #888;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .compare-btn {
+    width: 100%;
+    height: 52px;
+    padding: 0 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4a623; border: 2px solid #f4a623; color: #fff;
+    border-radius: 24px; font-size: 23px; font-weight: 700;
+    line-height: 1;
+    cursor: pointer; letter-spacing: 0.3px;
+    transition: background 0.15s;
+  }
+  .compare-btn:hover:not(:disabled) { background: #dc8f1a; border-color: #dc8f1a; }
+  .compare-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* plan modal */
+  body.modal-open { overflow: hidden; }
+  body.modal-dragging { user-select: none; }
+  .plan-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1500;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 4px 8px;
+  }
+  .plan-modal-overlay.open { display: flex; }
+  .plan-modal-overlay.compare-mode {
+    padding: 0;
+  }
+  .plan-modal-overlay.compare-mode .plan-modal {
+    width: 100vw;
+    height: 100vh;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    resize: none;
+  }
+  .plan-modal {
+    --modal-drag-x: 0px;
+    --modal-drag-y: 0px;
+    width: min(1680px, 80vw);
+    height: min(980px, 80vh);
+    min-width: 720px;
+    min-height: 420px;
+    max-width: calc(100vw - 4px);
+    max-height: calc(100vh - 8px);
+    background: #fff;
+    border-radius: 10px;
+    border: 2px solid #333;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    resize: both;
+    transform: translate(var(--modal-drag-x), var(--modal-drag-y));
+  }
+  .plan-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 2px solid #d8e3ef;
+    background: #f6f9fc;
+    cursor: move;
+    touch-action: none;
+  }
+  .plan-modal-title {
+    font-size: 35px;
+    font-weight: 800;
+    color: #1f2d3a;
+  }
+  .plan-modal-close {
+    width: 42px;
+    height: 42px;
+    border: 2px solid #9fb6cd;
+    border-radius: 6px;
+    background: #fff;
+    color: #2d3e50;
+    font-size: 35px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .plan-modal-body {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+  }
+  .plan-layout-single,
+  .plan-layout-compare {
+    height: 100%;
+    min-height: 0;
+  }
+  .plan-layout-single {
+    display: flex;
+    flex-direction: column;
+  }
+  .plan-layout-single .plan-pane-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+  .plan-layout-compare {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .plan-pane-wrap {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border: 2px solid #d5deea;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .plan-pane-title {
+    padding: 10px 14px;
+    border-bottom: 1px solid #dbe5f0;
+    background: #f4f8fc;
+    font-size: 30px;
+    font-weight: 700;
+    color: #2e4a67;
+  }
+  .plan-pane {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 4px;
+  }
+  .plan-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #f3f5f7;
+  }
+  .plan-pane > div {
+    height: 100%;
+    min-height: 0;
+  }
+  .plan-mount {
+    height: 100%;
+    min-height: 0;
+    zoom: var(--plan-scale, 1);
+  }
+  .plan-mount > * {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .plan-mount .tab-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+  }
+  .plan-mount .tab-pane,
+  .plan-mount .tab-pane.active,
+  .plan-mount .tab-pane.show,
+  .plan-mount .tab-pane.active.show {
+    height: 100%;
+    min-height: 0;
+  }
+  .plan-mount .splitpanes {
+    height: 100% !important;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+  .plan-mount .splitpanes__pane {
+    min-height: 0;
+  }
+  .plan-mount .plan-container {
+    height: 100% !important;
+    min-height: 0;
+  }
+  .plan-mount .plan-container > .tab-content {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .plan-mount .plan-container .tab-pane.show.active.d-flex {
+    min-height: 0;
+  }
+  .plan-mount .diagram {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .plan-mount .diagram > .overflow-auto.flex-grow-1 {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .plan-mount .plan.grab-bing {
+    height: 100%;
+    min-height: 0;
+  }
+  .plan-mount .plan-node {
+    width: 200px !important;
+  }
+  .plan-mount .plan-node .plan-node-body.card .card-body,
+  .plan-mount .plan-node .plan-node-body.card .card-header {
+    padding: 4px 8px !important;
+  }
+  @supports not (zoom: 1) {
+    .plan-mount {
+      transform: scale(var(--plan-scale, 1));
+      transform-origin: top left;
+      width: calc(100% / var(--plan-scale, 1));
+      height: calc(100% / var(--plan-scale, 1));
+    }
+  }
+  .plan-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .plan-error {
+    color: #b30000;
+    padding: 12px;
+    font-size: 19px;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+  }
+  @media (max-height: 780px) {
+    :root {
+      --results-main-min-height: 130px;
+    }
+    .plan-modal {
+      width: calc(100vw - 4px);
+      height: calc(100vh - 8px);
+    }
+    .plan-modal-body { padding: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<header>Exqutor Demonstration</header>
+
+<div class="controls">
+  <div class="selectors">
+    <label>Benchmark</label>
+    <select id="benchSel"><option value="">-- select --</option></select>
+
+    <label>Query</label>
+    <select id="querySel"><option value="">-- select --</option></select>
+
+    <label>Vector distance</label>
+    <div class="stepper">
+      <button type="button" id="distMinus" aria-label="decrease distance">-</button>
+      <input id="distValue" type="text" value="1" readonly>
+      <button type="button" id="distPlus" aria-label="increase distance">+</button>
+    </div>
+
+    <label>Index</label>
+    <div class="toggle-group">
+      <label class="toggle-opt"><input type="radio" name="indexOpt" value="yes" checked>Yes</label>
+      <label class="toggle-opt"><input type="radio" name="indexOpt" value="no">No</label>
+    </div>
+  </div>
+  <div class="sql-wrap">
+    <textarea id="sqlArea" readonly placeholder="Select a query to preview SQL…"></textarea>
+    <button id="startBtn" disabled>START</button>
+  </div>
+</div>
+
+<div class="results">
+  <!-- pgvector -->
+  <div class="panel" id="vanilla-panel">
+    <h2>pgvector Result</h2>
+    <div class="spinner"></div>
+    <div class="rowcount-box is-placeholder" id="vanilla-rowcount">Row Count</div>
+    <div class="plan-box is-placeholder" id="vanilla-plan">Query Result</div>
+    <div class="panel-footer">
+      <div class="timing-box is-placeholder" id="vanilla-time">Execution Time</div>
+      <button class="view-btn" id="vanilla-view-btn" disabled
+              onclick="visualizePlan('vanilla')">VISUALIZE QUERY PLAN</button>
+    </div>
+  </div>
+
+  <!-- Exqutor -->
+  <div class="panel" id="exqutor-panel">
+    <h2>Exqutor Result</h2>
+    <div class="spinner"></div>
+    <div class="rowcount-box is-placeholder" id="exqutor-rowcount">Row Count</div>
+    <div class="plan-box is-placeholder" id="exqutor-plan">Query Result</div>
+    <div class="panel-footer">
+      <div class="timing-box is-placeholder" id="exqutor-time">Execution Time</div>
+      <button class="view-btn" id="exqutor-view-btn" disabled
+              onclick="visualizePlan('exqutor')">VISUALIZE QUERY PLAN</button>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="panel chart-panel">
+    <h2>Performance Graph</h2>
+    <div class="chart-block">
+      <div class="chart-canvas"><canvas id="perfChartLinear"></canvas></div>
+    </div>
+    <div class="panel-footer">
+      <div class="speedup-box is-placeholder" id="speedupBox">Speedup: waiting for both results</div>
+      <button class="compare-btn" id="comparePlanBtn" disabled onclick="comparePlans()">COMPARE QUERY PLAN</button>
+    </div>
+  </div>
+</div>
+
+<div class="plan-modal-overlay" id="planModalOverlay" onclick="onPlanModalOverlayClick(event)">
+  <div class="plan-modal">
+    <div class="plan-modal-header">
+      <div class="plan-modal-title" id="planModalTitle">Query Result</div>
+      <button class="plan-modal-close" onclick="closePlanModal()" aria-label="close query result modal">X</button>
+    </div>
+    <div class="plan-modal-body">
+      <div class="plan-layout-single" id="singleLayout">
+        <div class="plan-pane-wrap">
+          <div class="plan-pane-title" id="singlePlanLabel">Result</div>
+          <div class="plan-pane" id="singlePlanPane">
+            <div class="plan-placeholder">Loading query result...</div>
+          </div>
+        </div>
+      </div>
+      <div class="plan-layout-compare" id="compareLayout" style="display:none;">
+        <div class="plan-pane-wrap">
+          <div class="plan-pane-title">pgvector Result</div>
+          <div class="plan-pane" id="compareVanillaPane">
+            <div class="plan-placeholder">Loading pgvector result...</div>
+          </div>
+        </div>
+        <div class="plan-pane-wrap">
+          <div class="plan-pane-title">Exqutor Result</div>
+          <div class="plan-pane" id="compareExqutorPane">
+            <div class="plan-placeholder">Loading Exqutor result...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const plans = { exqutor: null, vanilla: null };
+let mountedPlanApps = [];
+let allQueries = {};
+let currentBench = '';
+let currentQueryName = '';
+let fullSql = '';
+let chartLinear = null;
+const DIST_CONFIG = {
+  'TPC-H VAQ': { min: 0.80, max: 1.00, step: 0.025, default: 0.875 },
+  'TPC-DS VAQ': { min: 0.95, max: 1.35, step: 0.05, default: 1.08 },
+};
+const DIST_FALLBACK = { min: 0.80, max: 1.35, step: 0.025, default: 1.00 };
+let currentDistConfig = DIST_FALLBACK;
+let currentDistance = DIST_FALLBACK.default;
+
+function formatDistance(v) {
+  return parseFloat(v.toFixed(3)).toString();
+}
+function clampDistance(v) {
+  return Math.max(
+    currentDistConfig.min,
+    Math.min(currentDistConfig.max, parseFloat(v.toFixed(3)))
+  );
+}
+function getDistanceParam() {
+  return encodeURIComponent(formatDistance(currentDistance));
+}
+
+function applyDistanceConfig(bench) {
+  currentDistConfig = DIST_CONFIG[bench] ?? DIST_FALLBACK;
+  currentDistance = clampDistance(currentDistConfig.default);
+  document.getElementById('distValue').value = formatDistance(currentDistance);
+}
+
+async function refreshSqlPreview() {
+  if (!currentBench || !currentQueryName) {
+    document.getElementById('sqlArea').value = '';
+    return;
+  }
+  const res = await fetch(
+    `/sql/${encodeURIComponent(currentBench)}/${currentQueryName}?distance=${getDistanceParam()}`
+  );
+  const data = await res.json();
+  fullSql = data.sql ?? data.error ?? '';
+  applyIndexToggle();
+}
+
+async function setDistance(next) {
+  const clamped = clampDistance(next);
+  if (clamped === currentDistance) return;
+  currentDistance = clamped;
+  document.getElementById('distValue').value = formatDistance(currentDistance);
+  resetPanels();
+  await refreshSqlPreview();
+}
+
+function applyIndexToggle() {
+  const useIndex = document.querySelector('input[name="indexOpt"]:checked').value === 'yes';
+  const area = document.getElementById('sqlArea');
+  area.value = useIndex ? fullSql : fullSql.replace(/\/\*\+[^*]*\*\//g, '').replace(/[ \t]+\n/g, '\n');
+}
+
+// ── Load benchmarks + queries ─────────────────────────────────
+async function loadQueries() {
+  const res = await fetch('/queries');
+  allQueries = await res.json();
+
+  const benchSel = document.getElementById('benchSel');
+  for (const bench of Object.keys(allQueries)) {
+    const opt = document.createElement('option');
+    opt.value = bench; opt.textContent = bench;
+    benchSel.appendChild(opt);
+  }
+  if (Object.keys(allQueries).length === 1) {
+    benchSel.value = Object.keys(allQueries)[0];
+    benchSel.dispatchEvent(new Event('change'));
+  }
+}
+
+// ── Benchmark selected ────────────────────────────────────────
+document.getElementById('benchSel').addEventListener('change', function() {
+  currentBench = this.value;
+  applyDistanceConfig(currentBench);
+  resetPanels();
+  const querySel = document.getElementById('querySel');
+  querySel.innerHTML = '<option value="">-- select --</option>';
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('sqlArea').value = '';
+  fullSql = '';
+
+  if (!currentBench) return;
+  for (const q of (allQueries[currentBench] ?? [])) {
+    const opt = document.createElement('option');
+    opt.value = q; opt.textContent = q;
+    querySel.appendChild(opt);
+  }
+});
+
+// ── Query selected ───────────────────────────────────────────
+document.getElementById('querySel').addEventListener('change', async function() {
+  currentQueryName = this.value;
+  resetPanels();
+  document.getElementById('startBtn').disabled = !currentQueryName;
+  if (!currentQueryName) { document.getElementById('sqlArea').value = ''; return; }
+  await refreshSqlPreview();
+});
+
+// ── START ────────────────────────────────────────────────────
+document.getElementById('startBtn').addEventListener('click', async function() {
+  if (!currentBench || !currentQueryName) return;
+
+  resetPanels();
+  this.disabled = true;
+
+  const useIndex = document.querySelector('input[name="indexOpt"]:checked').value;
+  const es = new EventSource(
+    `/run/${encodeURIComponent(currentBench)}/${currentQueryName}?use_index=${useIndex}&distance=${getDistanceParam()}`
+  );
+  es.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+
+    if (data.event === 'start') {
+      setRunning('exqutor', true);
+      setRunning('vanilla', true);
+      return;
+    }
+    if (data.event === 'done') {
+      es.close();
+      document.getElementById('startBtn').disabled = false;
+      return;
+    }
+
+    const src = data.source; // 'exqutor' or 'vanilla'
+    setRunning(src, false);
+
+    if (data.success) {
+      // Render result table
+      const rowcountEl = document.getElementById(`${src}-rowcount`);
+      rowcountEl.textContent = `${data.rows.length} rows`;
+      rowcountEl.classList.remove('is-placeholder');
+
+      const planEl = document.getElementById(`${src}-plan`);
+      planEl.classList.remove('is-placeholder');
+      planEl.innerHTML = buildTable(data.columns, data.rows);
+
+      const timeEl = document.getElementById(`${src}-time`);
+      const ms = data.exec_time;
+      timeEl.textContent = ms >= 1000
+        ? `${(ms/1000).toFixed(2)} s`
+        : `${ms.toFixed(1)} ms`;
+      timeEl.classList.remove('is-placeholder');
+
+      document.getElementById(`${src}-view-btn`).disabled = false;
+      setCompareButtonState();
+      updateChart();
+    } else {
+      const planEl = document.getElementById(`${src}-plan`);
+      planEl.textContent = `Error: ${data.error}`;
+      planEl.classList.remove('is-placeholder');
+      setCompareButtonState();
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    document.getElementById('startBtn').disabled = false;
+  };
+});
+
+function resetPanels() {
+  closePlanModal();
+  for (const src of ['exqutor', 'vanilla']) {
+    plans[src] = null;
+    setRunning(src, false);
+
+    const rowcountEl = document.getElementById(`${src}-rowcount`);
+    rowcountEl.textContent = 'Row Count';
+    rowcountEl.classList.add('is-placeholder');
+
+    const planEl = document.getElementById(`${src}-plan`);
+    planEl.textContent = 'Query Result';
+    planEl.classList.add('is-placeholder');
+
+    const timeEl = document.getElementById(`${src}-time`);
+    timeEl.textContent = 'Execution Time';
+    timeEl.classList.add('is-placeholder');
+
+    document.getElementById(`${src}-view-btn`).disabled = true;
+  }
+  document.getElementById('comparePlanBtn').disabled = true;
+  if (chartLinear) { chartLinear.destroy(); chartLinear = null; }
+  const box = document.getElementById('speedupBox');
+  box.textContent = 'Speedup: waiting for both results';
+  box.classList.add('is-placeholder');
+}
+
+function setCompareButtonState() {
+  const enabled =
+    !document.getElementById('vanilla-view-btn').disabled &&
+    !document.getElementById('exqutor-view-btn').disabled;
+  document.getElementById('comparePlanBtn').disabled = !enabled;
+}
+
+function setRunning(src, running) {
+  const panel = document.getElementById(`${src}-panel`);
+  if (running) panel.classList.add('running');
+  else panel.classList.remove('running');
+}
+
+// ── Chart ────────────────────────────────────────────────────
+function extractTime(src) {
+  const el = document.getElementById(`${src}-time`);
+  if (el.classList.contains('is-placeholder')) return null;
+  const txt = el.textContent;
+  const m = txt.match(/([\d.]+)\s*(ms|s)/);
+  if (!m) return null;
+  return m[2] === 's' ? parseFloat(m[1]) * 1000 : parseFloat(m[1]);
+}
+
+function makeChartConfig(exTime, vaTime, logScale) {
+  return {
+    type: 'bar',
+    data: {
+      labels: ['pgvector', 'Exqutor'],
+      datasets: [{
+        data: [vaTime ?? 0, exTime ?? 0],
+        backgroundColor: ['#4a90c8', '#f4a623'],
+        borderRadius: 6,
+        barPercentage: 0.8,
+        categoryPercentage: 0.7,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end',
+          align: 'end',
+          offset: 8,
+          clip: false,
+          formatter: v => v >= 1000 ? (v/1000).toFixed(2)+'s' : Math.round(v)+'ms',
+          font: { size: 15, weight: 'bold' },
+          color: '#333',
+        }
+      },
+      scales: {
+        y: {
+          type: logScale ? 'logarithmic' : 'linear',
+          beginAtZero: true,
+          grace: '16%',
+          title: { display: true, text: 'Execution Time (ms)', font: { size: 14, weight: '600' } },
+          ticks: { font: { size: 10 } },
+          border: { width: 2, color: '#333' },
+          grid: { lineWidth: 1.5, color: '#dde3ea' },
+        },
+        x: {
+          ticks: { font: { size: 18, weight: '600' } },
+          border: { width: 2, color: '#333' },
+          grid: { lineWidth: 0 },
+        }
+      },
+      layout: { padding: { top: 22 } }
+    },
+    plugins: [ChartDataLabels]
+  };
+}
+
+function updateChart() {
+  const exTime = extractTime('exqutor');
+  const vaTime = extractTime('vanilla');
+  updateSpeedupSummary(exTime, vaTime);
+  if (!exTime && !vaTime) return;
+
+  if (chartLinear) chartLinear.destroy();
+
+  chartLinear = new Chart(
+    document.getElementById('perfChartLinear').getContext('2d'),
+    makeChartConfig(exTime, vaTime, false)
+  );
+}
+
+function updateSpeedupSummary(exTime, vaTime) {
+  const box = document.getElementById('speedupBox');
+  if (!exTime || !vaTime || exTime <= 0 || vaTime <= 0) {
+    box.textContent = 'Speedup: waiting for both results';
+    box.classList.add('is-placeholder');
+    return;
+  }
+
+  const savedSec = (vaTime - exTime) / 1000;
+  const speedup = vaTime / exTime;
+
+  if (savedSec >= 0) {
+    box.textContent = `${speedup.toFixed(2)}x faster`;
+  } else {
+    box.textContent = `${(1 / speedup).toFixed(2)}x slower`;
+  }
+  box.classList.remove('is-placeholder');
+}
+
+// ── Result table builder ──────────────────────────────────────
+function buildTable(columns, rows) {
+  if (!columns || columns.length === 0) return '<div style="padding:16px;color:#aaa">No results</div>';
+  const ths = columns.map(c => `<th>${c}</th>`).join('');
+  const trs = rows.map(row =>
+    `<tr>${row.map(v => `<td>${v ?? '<span style="color:#aaa">NULL</span>'}</td>`).join('')}</tr>`
+  ).join('');
+  return `<table class="result-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+// ── Query plan modal (PEV2) ───────────────────────────────────
+let planRequestSeq = 0;
+let modalDragX = 0;
+let modalDragY = 0;
+let modalDragActive = false;
+let modalDragPointerId = null;
+let modalDragStartX = 0;
+let modalDragStartY = 0;
+let modalDragOriginX = 0;
+let modalDragOriginY = 0;
+
+function getPlanModalElement() {
+  return document.querySelector('.plan-modal');
+}
+
+function applyModalDragOffset() {
+  const modalEl = getPlanModalElement();
+  if (!modalEl) return;
+  modalEl.style.setProperty('--modal-drag-x', `${modalDragX}px`);
+  modalEl.style.setProperty('--modal-drag-y', `${modalDragY}px`);
+}
+
+function clampModalDragOffset() {
+  const modalEl = getPlanModalElement();
+  if (!modalEl) return;
+
+  const modalWidth = modalEl.offsetWidth;
+  const modalHeight = modalEl.offsetHeight;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const pad = 2;
+
+  const maxX = Math.max(0, (vw - modalWidth) / 2 - pad);
+  const maxY = Math.max(0, (vh - modalHeight) / 2 - pad);
+  modalDragX = Math.max(-maxX, Math.min(maxX, modalDragX));
+  modalDragY = Math.max(-maxY, Math.min(maxY, modalDragY));
+  applyModalDragOffset();
+}
+
+function resetModalDragOffset() {
+  modalDragX = 0;
+  modalDragY = 0;
+  clampModalDragOffset();
+}
+
+function onPlanModalHeaderPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  if (e.target.closest('.plan-modal-close')) return;
+
+  modalDragActive = true;
+  modalDragPointerId = e.pointerId;
+  modalDragStartX = e.clientX;
+  modalDragStartY = e.clientY;
+  modalDragOriginX = modalDragX;
+  modalDragOriginY = modalDragY;
+
+  if (e.currentTarget.setPointerCapture && e.pointerId !== undefined) {
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  document.body.classList.add('modal-dragging');
+  e.preventDefault();
+}
+
+function onPlanModalHeaderPointerMove(e) {
+  if (!modalDragActive) return;
+  if (modalDragPointerId !== null && e.pointerId !== modalDragPointerId) return;
+
+  modalDragX = modalDragOriginX + (e.clientX - modalDragStartX);
+  modalDragY = modalDragOriginY + (e.clientY - modalDragStartY);
+  clampModalDragOffset();
+}
+
+function stopPlanModalDrag(e) {
+  if (!modalDragActive) return;
+  if (e && modalDragPointerId !== null && e.pointerId !== undefined && e.pointerId !== modalDragPointerId) return;
+
+  modalDragActive = false;
+  modalDragPointerId = null;
+  document.body.classList.remove('modal-dragging');
+}
+
+function setupPlanModalDrag() {
+  const header = document.querySelector('.plan-modal-header');
+  if (!header || header.dataset.dragBound === '1') return;
+
+  header.dataset.dragBound = '1';
+  header.addEventListener('pointerdown', onPlanModalHeaderPointerDown);
+  header.addEventListener('pointermove', onPlanModalHeaderPointerMove);
+  header.addEventListener('pointerup', stopPlanModalDrag);
+  header.addEventListener('pointercancel', stopPlanModalDrag);
+  header.addEventListener('lostpointercapture', stopPlanModalDrag);
+}
+
+function clearMountedPlanApps() {
+  for (const app of mountedPlanApps) app.unmount();
+  mountedPlanApps = [];
+}
+
+function beginPlanRequest() {
+  planRequestSeq += 1;
+  return planRequestSeq;
+}
+
+function isCurrentPlanRequest(requestId) {
+  return requestId === planRequestSeq &&
+    document.getElementById('planModalOverlay').classList.contains('open');
+}
+
+function openPlanModal(title, mode, singleLabel = 'Result') {
+  closePlanModal();
+  const overlayEl = document.getElementById('planModalOverlay');
+  overlayEl.classList.toggle('compare-mode', mode === 'compare');
+  document.getElementById('planModalTitle').textContent = title;
+  document.getElementById('singlePlanLabel').textContent = singleLabel;
+  document.getElementById('singleLayout').style.display = mode === 'single' ? 'flex' : 'none';
+  document.getElementById('compareLayout').style.display = mode === 'compare' ? 'grid' : 'none';
+  overlayEl.classList.add('open');
+  document.body.classList.add('modal-open');
+  resetModalDragOffset();
+}
+
+function closePlanModal() {
+  planRequestSeq += 1;
+  clearMountedPlanApps();
+  stopPlanModalDrag();
+  const overlayEl = document.getElementById('planModalOverlay');
+  overlayEl.classList.remove('open', 'compare-mode');
+  document.body.classList.remove('modal-open');
+}
+
+function onPlanModalOverlayClick(e) {
+  if (e.target.id === 'planModalOverlay') closePlanModal();
+}
+
+function showLoading(containerId, text) {
+  document.getElementById(containerId).innerHTML =
+    `<div class="plan-placeholder">${text}</div>`;
+}
+
+function showPlanError(containerId, error) {
+  const msg = error instanceof Error ? error.message : String(error);
+  document.getElementById(containerId).innerHTML =
+    `<div class="plan-error">Error: ${msg}</div>`;
+}
+
+function jsonForInlineScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+}
+
+function buildPevIframeDoc(planJson, planQuery) {
+  const safePlan = jsonForInlineScript(planJson);
+  const safeQuery = jsonForInlineScript(planQuery || '');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://unpkg.com/bootstrap@5/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/pev2/dist/pev2.css">
+  <style>
+    html, body, #app { height: 100%; margin: 0; }
+    body { overflow: hidden; background: #f3f5f7; font-size: 16px; }
+    #app { display: flex; flex-direction: column; }
+    .nav-link {
+      font-size: 18px !important;
+    }
+    .plan-container .btn,
+    .plan-container .btn-group .btn,
+    .plan-container small,
+    .plan-container .small,
+    .plan-container .table,
+    .plan-container .table td,
+    .plan-container .table th {
+      font-size: 18px !important;
+      line-height: 1.2 !important;
+    }
+    .plan-node,
+    .plan-node .plan-node-body,
+    .plan-node .plan-node-body.card {
+      width: 360px !important;
+      min-width: 360px !important;
+      max-width: 360px !important;
+    }
+    .plan-node .plan-node-body.card .card-header,
+    .plan-node .plan-node-body.card .card-header * {
+      font-size: 24px !important;
+      font-weight: 700 !important;
+    }
+    .plan-node .plan-node-body.card .card-body,
+    .plan-node .plan-node-body.card .card-body * {
+      font-size: 20px !important;
+      line-height: 1.3 !important;
+    }
+    .plan.grab-bing svg {
+      shape-rendering: geometricPrecision;
+      text-rendering: geometricPrecision;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"><\/script>
+  <script src="https://unpkg.com/pev2/dist/pev2.umd.js"><\/script>
+  <script>
+    const planObj = ${safePlan};
+    const planQuery = ${safeQuery};
+
+    function compactPlanVertical(factor = 0.84) {
+      const svg = document.querySelector('.plan.grab-bing svg');
+      const g = svg ? svg.querySelector('g') : null;
+      if (!svg || !g) return false;
+      if (g.dataset.verticalCompacted === '1') return true;
+
+      const current = g.getAttribute('transform') || '';
+      const m = current.match(
+        /translate\(([-\\d.]+)[ ,]([-\\d.]+)\)\\s*scale\(([-\\d.]+)(?:[ ,]([-\\d.]+))?\)/
+      );
+      if (!m) return false;
+
+      const tx = parseFloat(m[1]);
+      const ty = parseFloat(m[2]);
+      const sx = parseFloat(m[3]);
+      const syRaw = m[4] != null ? parseFloat(m[4]) : sx;
+      if (!Number.isFinite(tx) || !Number.isFinite(ty) || !Number.isFinite(sx) || !Number.isFinite(syRaw)) {
+        return false;
+      }
+
+      const sy = syRaw * factor;
+      g.setAttribute(
+        'transform',
+        'translate(' + tx.toFixed(2) + ',' + ty.toFixed(2) + ') scale(' + sx.toFixed(4) + ',' + sy.toFixed(4) + ')'
+      );
+      g.dataset.verticalCompacted = '1';
+      return true;
+    }
+
+    function scheduleVerticalCompact() {
+      const delays = [120, 320, 700];
+      for (const d of delays) {
+        setTimeout(() => { compactPlanVertical(); }, d);
+      }
+    }
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          planSource: JSON.stringify(planObj),
+          planQuery
+        };
+      },
+      template: '<pev2 :plan-source="planSource" :plan-query="planQuery"></pev2>'
+    });
+    app.component('pev2', pev2.Plan);
+    app.mount('#app');
+    scheduleVerticalCompact();
+    setTimeout(() => {
+      const btns = Array.from(document.querySelectorAll('.btn-group .btn'));
+      const noneBtn = btns.find((b) => b.textContent.trim() === 'none');
+      if (noneBtn && !noneBtn.classList.contains('active')) noneBtn.click();
+      scheduleVerticalCompact();
+    }, 0);
+  <\/script>
+</body>
+</html>`;
+}
+
+function renderPlanInIframe(containerId, planJson) {
+  const container = document.getElementById(containerId);
+  const iframe = document.createElement('iframe');
+  iframe.className = 'plan-iframe';
+  iframe.loading = 'eager';
+  iframe.referrerPolicy = 'no-referrer';
+  iframe.srcdoc = buildPevIframeDoc(planJson, fullSql || '');
+  container.innerHTML = '';
+  container.appendChild(iframe);
+}
+
+function mountPev2Into(containerId, planJson) {
+  const container = document.getElementById(containerId);
+  const mountPoint = document.createElement('div');
+  mountPoint.className = 'plan-mount d-flex flex-column h-100';
+  const scale = 1;
+  mountPoint.style.setProperty('--plan-scale', String(scale));
+  container.innerHTML = '';
+  container.appendChild(mountPoint);
+
+  const app = Vue.createApp({
+    data() {
+      return {
+        planSource: JSON.stringify(planJson),
+        planQuery: fullSql || '',
+      };
+    },
+    template: '<pev2 :plan-source="planSource" :plan-query="planQuery"></pev2>',
+  });
+  app.component('pev2', pev2.Plan);
+  app.mount(mountPoint);
+  requestAnimationFrame(() => tunePevLayout(containerId));
+  setTimeout(() => tunePevLayout(containerId), 120);
+  scheduleFitDiagram(containerId);
+  mountedPlanApps.push(app);
+}
+
+function tunePevLayout(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const root = container.querySelector('.plan-mount > *');
+  if (!root) return;
+  root.style.height = '100%';
+  root.style.minHeight = '0';
+  root.style.display = 'flex';
+  root.style.flexDirection = 'column';
+
+  const tabContent = root.querySelector('.tab-content');
+  if (tabContent) {
+    tabContent.style.flex = '1 1 auto';
+    tabContent.style.minHeight = '0';
+  }
+
+  const split = root.querySelector('.splitpanes');
+  if (split) {
+    split.style.height = '100%';
+    split.style.minHeight = '0';
+    split.style.flex = '1 1 auto';
+  }
+
+  const diagram = root.querySelector('.diagram');
+  if (diagram) {
+    diagram.style.display = 'flex';
+    diagram.style.flexDirection = 'column';
+    diagram.style.height = '100%';
+    diagram.style.minHeight = '0';
+  }
+
+  const diagramScroll = root.querySelector('.diagram > .overflow-auto.flex-grow-1');
+  if (diagramScroll) {
+    diagramScroll.style.flex = '1 1 auto';
+    diagramScroll.style.minHeight = '0';
+  }
+
+  const planCanvas = root.querySelector('.plan.grab-bing');
+  if (planCanvas) {
+    planCanvas.style.height = '100%';
+    planCanvas.style.minHeight = '0';
+  }
+}
+
+function fitDiagramToViewport(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return false;
+  const planCanvas = container.querySelector('.plan.grab-bing');
+  if (!planCanvas) return false;
+
+  const svg = planCanvas.querySelector('svg');
+  const g = svg ? svg.querySelector('g') : null;
+  if (!svg || !g) return false;
+
+  const viewportWidth = planCanvas.clientWidth;
+  const viewportHeight = planCanvas.clientHeight;
+  if (viewportWidth < 32 || viewportHeight < 32) return false;
+
+  let bbox;
+  try {
+    bbox = g.getBBox();
+  } catch (e) {
+    return false;
+  }
+  if (!bbox || bbox.width <= 0 || bbox.height <= 0) return false;
+
+  const padX = Math.max(18, viewportWidth * 0.03);
+  const padY = Math.max(14, viewportHeight * 0.03);
+  const sx = (viewportWidth - padX * 2) / bbox.width;
+  const sy = (viewportHeight - padY * 2) / bbox.height;
+  // Do not upscale above 1x. Upscaling amplifies row-width strokes and can
+  // create large gray artifacts on plans with very wide links.
+  let scale = Math.min(sx, sy);
+  scale = Math.max(0.2, Math.min(scale, 1));
+  const tx = (viewportWidth - bbox.width * scale) / 2 - bbox.x * scale;
+  const ty = (viewportHeight - bbox.height * scale) / 2 - bbox.y * scale;
+  g.setAttribute('transform', `translate(${tx.toFixed(2)},${ty.toFixed(2)}) scale(${scale.toFixed(4)})`);
+  return true;
+}
+
+function scheduleFitDiagram(containerId) {
+  const delays = [120, 320];
+  for (const d of delays) {
+    setTimeout(() => {
+      fitDiagramToViewport(containerId);
+    }, d);
+  }
+}
+
+function refreshPlanViewport() {
+  requestAnimationFrame(() => {
+    clampModalDragOffset();
+    tunePevLayout('singlePlanPane');
+    tunePevLayout('compareVanillaPane');
+    tunePevLayout('compareExqutorPane');
+    fitDiagramToViewport('singlePlanPane');
+    fitDiagramToViewport('compareVanillaPane');
+    fitDiagramToViewport('compareExqutorPane');
+  });
+}
+
+async function getPlanForSource(src) {
+  if (plans[src]) return plans[src];
+  const useIndex = document.querySelector('input[name="indexOpt"]:checked').value;
+  const res = await fetch(
+    `/plan/${encodeURIComponent(currentBench)}/${currentQueryName}?source=${src}&use_index=${useIndex}&distance=${getDistanceParam()}`
+  );
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error || 'Failed to load plan');
+  plans[src] = data.plan_json;
+  return plans[src];
+}
+
+async function visualizePlan(src) {
+  if (!currentBench || !currentQueryName) return;
+  const label = src === 'exqutor' ? 'Exqutor' : 'pgvector';
+  openPlanModal(`${label} Query Result`, 'single', `${label} Result`);
+  showLoading('singlePlanPane', 'Loading query result...');
+  const requestId = beginPlanRequest();
+
+  try {
+    const plan = await getPlanForSource(src);
+    if (!isCurrentPlanRequest(requestId)) return;
+    renderPlanInIframe('singlePlanPane', plan);
+  } catch (e) {
+    if (!isCurrentPlanRequest(requestId)) return;
+    showPlanError('singlePlanPane', e);
+  }
+}
+
+async function comparePlans() {
+  if (document.getElementById('comparePlanBtn').disabled) return;
+  openPlanModal('Compare Query Plans', 'compare');
+  showLoading('compareVanillaPane', 'Loading pgvector result...');
+  showLoading('compareExqutorPane', 'Loading Exqutor result...');
+  const requestId = beginPlanRequest();
+
+  const [vanillaRes, exqutorRes] = await Promise.allSettled([
+    getPlanForSource('vanilla'),
+    getPlanForSource('exqutor'),
+  ]);
+  if (!isCurrentPlanRequest(requestId)) return;
+
+  if (vanillaRes.status === 'fulfilled') {
+    renderPlanInIframe('compareVanillaPane', vanillaRes.value);
+  } else {
+    showPlanError('compareVanillaPane', vanillaRes.reason);
+  }
+  if (exqutorRes.status === 'fulfilled') {
+    renderPlanInIframe('compareExqutorPane', exqutorRes.value);
+  } else {
+    showPlanError('compareExqutorPane', exqutorRes.reason);
+  }
+}
+
+document.querySelectorAll('input[name="indexOpt"]').forEach(r =>
+  r.addEventListener('change', () => {
+    applyIndexToggle();
+    resetPanels();
+  })
+);
+document.getElementById('distMinus').addEventListener('click', () =>
+  setDistance(currentDistance - currentDistConfig.step)
+);
+document.getElementById('distPlus').addEventListener('click', () =>
+  setDistance(currentDistance + currentDistConfig.step)
+);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePlanModal();
+});
+window.addEventListener('resize', () => {
+  refreshPlanViewport();
+});
+
+if (window.ResizeObserver) {
+  const modalEl = document.querySelector('.plan-modal');
+  if (modalEl) {
+    const modalSizeObserver = new ResizeObserver(() => {
+      refreshPlanViewport();
+    });
+    modalSizeObserver.observe(modalEl);
+  }
+}
+
+setupPlanModalDrag();
+loadQueries();
+applyDistanceConfig('');
+</script>
+</body>
+</html>
