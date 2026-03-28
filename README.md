@@ -1,17 +1,11 @@
 <div align="center">
-  <h1>Exqutor Demo: Interactive Demonstration of Query Optimization for Vector-Augmented Queries</h1>
-  <p><b>Accepted to ICDE'26</b></p>
-  <p>
-    <a href="https://arxiv.org/abs/2512.09695">Paper (arXiv)</a>
-  </p>
+  <h1>Towards Improved Cardinality-Based Optimization for Vector-Augmented Queries with Exqutor </h1>
 </div>
 
-## Overview
-
-**Exqutor Demo** presents an interactive demonstration of **Exqutor** (**Extended Query Optimizer for Vector-augmented Analytical Queries**), an open-source framework for improving the performance of **vector-augmented queries (VAQs)** in generalized vector database systems.
+In this repository, we demonstrate **Exqutor**, an open-source framework for improving the performance of **vector-augmented queries (VAQs)** in generalized vector database management systems. This work is based on our paper accepted at ICDE'26 ([Paper link](https://arxiv.org/abs/2512.09695)).
 
 <div align="center">
-    <img src="figure/overview.pdf" alt="Exqutor Overview" width="90%">
+    <img src="figure/overview.png" alt="Exqutor Overview" width="90%">
 </div>
 
 VAQs combine **vector similarity search (VSS)** with relational operators such as **joins** and **filters**. However, existing query optimizers often treat vector predicates as black-box operators and rely on fixed or heuristic selectivity estimates, which can lead to inefficient query plans.
@@ -28,15 +22,14 @@ By replacing heuristic selectivity with computed cardinalities in the optimizer 
 This demo allows users to interactively explore how Exqutor improves query planning for vector-augmented queries.
 
 <div align="center">
-    <img src="figure/demo.pdf" alt="Demo Screenshot" width="90%">
+    <img src="figure/demo.png" alt="Demo Screenshot" width="90%">
 </div>
 
 Specifically, the demo highlights:
 
-- **Plan-level comparison** between baseline optimization and Exqutor
-- **Threshold sensitivity** for vector distance predicates
-- **Index-aware optimization**, including cases with and without vector indexes
-- **Improved cardinality estimation** for vector predicates during planning
+- **Query plan comparison** between pgvector and Exqutor
+- **Vector distance threshold sensitivity** for vector predicates
+- **Two complementary techniques for vector predicate cardinality estimation**: Exact Cardinality Query Optimization (ECQO) and adaptive sampling-based estimator
 
 ## Repository Structure
 
@@ -66,19 +59,3 @@ python app.py
 ```
 
 Once the application is running, access the demo interface through the local endpoint specified by the server configuration in `app.py`.
-
-## Demo Material
-
-Additional materials for the demonstration are available in:
-
-- [`figure/overview.pdf`](./figure/overview.pdf): high-level overview of the demonstration
-- [`figure/demo.pdf`](./figure/demo.pdf): captured screenshots of the demo interface
-
-## Paper
-
-- **ICDE 2026**: Exqutor was accepted to ICDE 2026.
-- **arXiv**: [Paper link](https://arxiv.org/abs/2512.09695)
-
-## Contact
-
-For questions or issues, please open a GitHub issue or contact the authors.
