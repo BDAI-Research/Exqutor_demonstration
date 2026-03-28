@@ -4,9 +4,12 @@
 
 In this repository, we demonstrate **Exqutor**, an open-source framework for improving the performance of **vector-augmented queries (VAQs)** in generalized vector database management systems. This work is based on our paper accepted at ICDE'26 ([Paper link](https://arxiv.org/abs/2512.09695)).
 
+<br>
 <div align="center">
-    <img src="figure/overview.png" alt="Exqutor Overview" width="90%">
+    <img src="figure/overview.png" alt="Exqutor Overview" width="60%">
 </div>
+<br>
+
 
 VAQs combine **vector similarity search (VSS)** with relational operators such as **joins** and **filters**. However, existing query optimizers often treat vector predicates as black-box operators and rely on fixed or heuristic selectivity estimates, which can lead to inefficient query plans.
 
@@ -21,9 +24,10 @@ By replacing heuristic selectivity with computed cardinalities in the optimizer 
 
 This demo allows users to interactively explore how Exqutor improves query planning for vector-augmented queries.
 
+<br>
 <div align="center">
-    <img src="figure/demo.png" alt="Demo Screenshot" width="90%">
-</div>
+    <img src="figure/demo.png" alt="Demo Screenshot" width="80%">
+</div> <br>
 
 Specifically, the demo highlights:
 
