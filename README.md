@@ -10,6 +10,10 @@
 
 **Exqutor Demo** presents an interactive demonstration of **Exqutor** (**Extended Query Optimizer for Vector-augmented Analytical Queries**), an open-source framework for improving the performance of **vector-augmented queries (VAQs)** in generalized vector database systems.
 
+<div align="center">
+    <img src="figure/overview.pdf" alt="Exqutor Overview" width="90%">
+</div>
+
 VAQs combine **vector similarity search (VSS)** with relational operators such as **joins** and **filters**. However, existing query optimizers often treat vector predicates as black-box operators and rely on fixed or heuristic selectivity estimates, which can lead to inefficient query plans.
 
 Exqutor addresses this problem by integrating **cardinality estimation for vector predicates directly into the query planning phase**. It supports two complementary techniques:
@@ -22,6 +26,10 @@ By replacing heuristic selectivity with computed cardinalities in the optimizer 
 ## What This Demo Shows
 
 This demo allows users to interactively explore how Exqutor improves query planning for vector-augmented queries.
+
+<div align="center">
+    <img src="figure/demo.pdf" alt="Demo Screenshot" width="90%">
+</div>
 
 Specifically, the demo highlights:
 
@@ -57,7 +65,7 @@ Then launch the demo application:
 python app.py
 ```
 
-Once the application is running, access the demo interface through the local endpoint specified by the server configuration in `app.py`. Depending on the deployment setup, the frontend may also be opened directly via `index.html`.
+Once the application is running, access the demo interface through the local endpoint specified by the server configuration in `app.py`.
 
 ## Demo Material
 
@@ -69,20 +77,7 @@ Additional materials for the demonstration are available in:
 ## Paper
 
 - **ICDE 2026**: Exqutor was accepted to ICDE 2026.
-- **arXiv**: [Paper link](https://arxiv.org/abs/XXXX.XXXXX)
-
-## Citation
-
-If you use Exqutor in your research, please cite:
-
-~~~bibtex
-@inproceedings{exqutor_icde2026,
-  title={Exqutor: Query Optimization for Vector-Augmented Queries via Planning-Time Cardinality Estimation},
-  author={...},
-  booktitle={ICDE},
-  year={2026}
-}
-~~~
+- **arXiv**: [Paper link](https://arxiv.org/abs/2512.09695)
 
 ## Contact
 
