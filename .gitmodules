@@ -1,0 +1,3 @@
+[submodule "Exqutor"]
+	path = Exqutor
+	url = https://github.com/BDAI-Research/Exqutor.git
