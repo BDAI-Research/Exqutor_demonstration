@@ -35,19 +35,6 @@ Specifically, the demo highlights:
 - **Vector distance threshold sensitivity** for vector predicates
 - **Two complementary techniques for vector predicate cardinality estimation**: Exact Cardinality Query Optimization (ECQO) and adaptive sampling-based estimator
 
-## Repository Structure
-
-```bash
-Exqutor_demo/
-├── demo_web/
-│   ├── app.py
-│   └── index.html
-├── figure/
-│   ├── demo.pdf
-│   └── overview.pdf
-└── README.md
-```
-
 ## Running the Demo
 
 To run the demonstration, first navigate to the `demo_web` directory:
