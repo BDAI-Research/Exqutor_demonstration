@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>Towards Improved Cardinality-Based Optimization for Vector-Augmented Queries with Exqutor </h1>
+  <h1>Towards Improved Cardinality-Based Optimization for Vector-augmented Analytical Queries with Exqutor </h1>
 </div>
 
-In this repository, we demonstrate **Exqutor**, an open-source framework for improving the performance of **vector-augmented queries (VAQs)** in generalized vector database management systems. This work is based on our paper accepted at ICDE'26 ([Paper link](https://arxiv.org/abs/2512.09695)).
+In this repository, we demonstrate **Exqutor**, an open-source framework for improving the performance of **vector-augmented analytical queries (VAQs)** in generalized vector database management systems. This work is based on our paper accepted at ICDE'26 ([Paper link](https://arxiv.org/abs/2512.09695)).
 
 <br>
 <div align="center">
@@ -22,7 +22,7 @@ By replacing heuristic selectivity with computed cardinalities in the optimizer 
 
 ## What This Demo Shows
 
-This demo allows users to interactively explore how Exqutor improves query planning for vector-augmented queries.
+This demo allows users to interactively explore how Exqutor improves query planning for vector-augmented analytical queries (VAQs).
 
 <br>
 <div align="center">
